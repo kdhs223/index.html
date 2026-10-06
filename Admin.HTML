@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh sách đăng ký - Homeroom</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .admin-container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(25, 118, 210, 0.15);
+        }
+
+        .header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 15px;
+        }
+
+        .header-title h1 {
+            color: #0d47a1;
+            font-size: 24px;
+        }
+
+        .badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Khu vực chia thanh tìm kiếm thành 3 phần */
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #f8fbff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e1f5fe;
+        }
+
+        .search-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #37474f;
+        }
+
+        .search-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #b0bec5;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+            background: white;
+        }
+
+        .search-group input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-refresh {
+            background: #1e88e5;
+            color: white;
+        }
+        .btn-refresh:hover { background: #1565c0; }
+
+        .btn-clear {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .btn-clear:hover { background: #ffcdd2; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #cfd8dc;
+            font-size: 15px;
+        }
+
+        th {
+            background: #f1f8fe;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8fbff;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #546e7a;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        /* Style cho nút thùng rác */
+        .delete-btn {
+            background: #ffebee;
+            color: #d32f2f;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+        }
+
+        /* Responsive cho màn hình nhỏ */
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <div class="header-title">
+            <h1>📋 Danh Sách Học Sinh Đăng Ký</h1>
+            <span class="badge" id="totalCount">Tổng số: 0</span>
+        </div>
+
+        <!-- Chia thanh tìm kiếm thành 3 ô riêng biệt -->
+        <div class="search-grid">
+            <div class="search-group">
+                <label>🔍 Tìm theo Tên đăng nhập:</label>
+                <input type="text" id="searchUser" placeholder="Nhập tên đăng nhập..." onkeyup="filterUsers()">
+            </div>
+            <div class="search-group">
+                <label>🔍 Tìm theo Họ và tên:</label>
+                <input type="text" id="searchName" placeholder="Nhập họ và tên..." onkeyup="filterUsers()">
+            </div>
+            <div class="search-group">
+                <label>🔍 Tìm theo Mật khẩu:</label>
+                <input type="text" id="searchPass" placeholder="Nhập mật khẩu..." onkeyup="filterUsers()">
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn btn-refresh" onclick="loadUserList()">🔄 Làm mới / Đặt lại bộ lọc</button>
+            <button class="btn btn-clear" onclick="clearAllData()">🗑️ Xóa toàn bộ danh sách</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="8%">STT</th>
+                    <th width="22%">Tên đăng nhập</th>
+                    <th width="32%">Họ và tên</th>
+                    <th width="25%">Mật khẩu</th>
+                    <th width="13%" style="text-align: center;">Kick / Xóa</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <!-- Dữ liệu tự động điền vào đây -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Hàm load danh sách gốc (xóa trắng các ô tìm kiếm)
+        function loadUserList() {
+            document.getElementById("searchUser").value = "";
+            document.getElementById("searchName").value = "";
+            document.getElementById("searchPass").value = "";
+            renderTable(JSON.parse(localStorage.getItem("users")) || []);
+        }
+
+        // Hàm render bảng danh sách
+        function renderTable(users) {
+            const tbody = document.getElementById("userTableBody");
+            const totalCount = document.getElementById("totalCount");
+            
+            tbody.innerHTML = "";
+            totalCount.textContent = "Tổng số kết quả: " + users.length;
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Không tìm thấy học sinh phù hợp với từ khóa.</td></tr>`;
+                return;
+            }
+
+            users.forEach((u, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><b>${u.username}</b></td>
+                        <td>${u.name}</td>
+                        <td><span style="font-family: monospace; background: #f1f3f4; padding: 3px 8px; border-radius: 4px;">${u.password}</span></td>
+                        <td style="text-align: center;">
+                            <button class="delete-btn" onclick="deleteUser('${u.username}')" title="Xóa tài khoản này">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Hàm lọc tìm kiếm kết hợp cả 3 ô
+        function filterUsers() {
+            const keywordUser = document.getElementById("searchUser").value.toLowerCase().trim();
+            const keywordName = document.getElementById("searchName").value.toLowerCase().trim();
+            const keywordPass = document.getElementById("searchPass").value.toLowerCase().trim();
+            
+            const users = JSON.parse(localStorage.getItem("users")) || [];
+
+            // Lọc dữ liệu khớp với cả 3 điều kiện (nếu ô nào trống thì bỏ qua điều kiện đó)
+            const filteredUsers = users.filter(u => {
+                const matchUser = u.username.toLowerCase().includes(keywordUser);
+                const matchName = u.name.toLowerCase().includes(keywordName);
+                const matchPass = u.password.toLowerCase().includes(keywordPass);
+                return matchUser && matchName && matchPass;
+            });
+
+            renderTable(filteredUsers);
+        }
+
+        // Hàm xóa riêng một tài khoản
+        function deleteUser(username) {
+            if (confirm(`Bạn có chắc chắn muốn kick (xóa) tài khoản "${username}" không?`)) {
+                let users = JSON.parse(localStorage.getItem("users")) || [];
+                users = users.filter(u => u.username !== username);
+                localStorage.setItem("users", JSON.stringify(users));
+                
+                // Giữ nguyên kết quả tìm kiếm hiện tại
+                filterUsers();
+            }
+        }
+
+        // Hàm xóa toàn bộ dữ liệu
+        function clearAllData() {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ danh sách đã đăng ký không?")) {
+                localStorage.removeItem("users");
+                loadUserList();
+            }
+        }
+
+        // Tải danh sách khi vừa mở trang
+        loadUserList();
+    </script>
+
+</body>
+</html>
