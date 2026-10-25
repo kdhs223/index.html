@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý danh sách đăng ký - Homeroom</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .admin-container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(25, 118, 210, 0.15);
+        }
+
+        .header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 15px;
+        }
+
+        .header-title h1 {
+            color: #0d47a1;
+            font-size: 24px;
+        }
+
+        .badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #f8fbff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e1f5fe;
+        }
+
+        .search-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #37474f;
+        }
+
+        .search-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #b0bec5;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+            background: white;
+        }
+
+        .search-group input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-refresh {
+            background: #1e88e5;
+            color: white;
+        }
+        .btn-refresh:hover { background: #1565c0; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #cfd8dc;
+            font-size: 15px;
+        }
+
+        th {
+            background: #f1f8fe;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8fbff;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #546e7a;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        .delete-btn {
+            background: #ffebee;
+            color: #d32f2f;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+        }
+
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <div class="header-title">
+            <h1>📋 Danh Sách Học Sinh Đăng Ký (Trực tuyến)</h1>
+            <span class="badge" id="totalCount">Tổng số: 0</span>
+        </div>
+
+        <div class="search-grid">
+            <div class="search-group">
+                <label>🔍 Tìm theo Tên đăng nhập:</label>
+                <input type="text" id="searchUser" placeholder="Nhập tên đăng nhập..." onkeyup="filterUsers()">
+            </div>
+            <div class="search-group">
+                <label>🔍 Tìm theo Họ và tên:</label>
+                <input type="text" id="searchName" placeholder="Nhập họ và tên..." onkeyup="filterUsers()">
+            </div>
+            <div class="search-group">
+                <label>🔍 Tìm theo Mật khẩu:</label>
+                <input type="text" id="searchPass" placeholder="Nhập mật khẩu..." onkeyup="filterUsers()">
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn btn-refresh" onclick="fetchFirebaseData()">🔄 Tải lại dữ liệu từ Firebase</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="8%">STT</th>
+                    <th width="22%">Tên đăng nhập</th>
+                    <th width="32%">Họ và tên</th>
+                    <th width="25%">Mật khẩu</th>
+                    <th width="13%" style="text-align: center;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <tr><td colspan="5" class="empty-row">Đang kết nối lấy dữ liệu từ cơ sở dữ liệu trực tuyến...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SCRIPT TẢI DỮ LIỆU & XÓA TỪNG TÀI KHOẢN TỪ FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getDatabase, ref, get, child, remove } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpa3gRXj7pP7hA5B3__TeJ1EckwVPO1gY",
+            authDomain: "nckh-admin.firebaseapp.com",
+            databaseURL: "https://nckh-admin-default-rtdb.firebaseio.com",
+            projectId: "nckh-admin",
+            storageBucket: "nckh-admin.firebasestorage.app",
+            messagingSenderId: "948286026101",
+            appId: "1:948286026101:web:bcc66d9fcafbfc6d7ea33c",
+            measurementId: "G-T2ZF201BZC"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const dbRef = ref(db);
+
+        let globalUsersList = [];
+
+        window.fetchFirebaseData = function() {
+            const tbody = document.getElementById("userTableBody");
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Đang tải dữ liệu từ mây...</td></tr>`;
+
+            get(child(dbRef, `nckh_data`)).then((snapshot) => {
+                globalUsersList = [];
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    
+                    Object.keys(data).forEach(key => {
+                        let item = data[key];
+                        globalUsersList.push({
+                            key: key,
+                            username: item.username || '',
+                            name: item.name || item.fullname || '',
+                            password: item.password || ''
+                        });
+                    });
+                }
+                renderTable(globalUsersList);
+            }).catch((error) => {
+                console.error("Lỗi tải Firebase: ", error);
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-row" style="color: #d32f2f;">Lỗi kết nối Firebase trực tuyến!</td></tr>`;
+            });
+        };
+
+        window.renderTable = function(users) {
+            const tbody = document.getElementById("userTableBody");
+            const totalCount = document.getElementById("totalCount");
+            
+            tbody.innerHTML = "";
+            totalCount.textContent = "Tổng số kết quả: " + users.length;
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Không tìm thấy học sinh phù hợp.</td></tr>`;
+                return;
+            }
+
+            users.forEach((u, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><b>${u.username}</b></td>
+                        <td>${u.name}</td>
+                        <td><span style="font-family: monospace; background: #f1f3f4; padding: 3px 8px; border-radius: 4px;">${u.password}</span></td>
+                        <td style="text-align: center;">
+                            <button class="delete-btn" onclick="deleteUserFromFirebase('${u.key}')">🗑️ Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.deleteUserFromFirebase = function(key) {
+            if (confirm("Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống trực tuyến?")) {
+                remove(ref(db, 'nckh_data/' + key)).then(() => {
+                    alert("Đã xóa tài khoản thành công!");
+                    fetchFirebaseData();
+                }).catch((error) => {
+                    console.error("Lỗi khi xóa: ", error);
+                    alert("Có lỗi xảy ra khi xóa tài khoản!");
+                });
+            }
+        };
+
+        window.filterUsers = function() {
+            const keywordUser = document.getElementById("searchUser").value.toLowerCase().trim();
+            const keywordName = document.getElementById("searchName").value.toLowerCase().trim();
+            const keywordPass = document.getElementById("searchPass").value.toLowerCase().trim();
+            
+            const filtered = globalUsersList.filter(u => {
+                const matchUser = u.username.toLowerCase().includes(keywordUser);
+                const matchName = u.name.toLowerCase().includes(keywordName);
+                const matchPass = u.password.toLowerCase().includes(keywordPass);
+                return matchUser && matchName && matchPass;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Tự động tải dữ liệu ngay khi mở trang admin
+        fetchFirebaseData();
+    </script>
+</body>
+</html>
